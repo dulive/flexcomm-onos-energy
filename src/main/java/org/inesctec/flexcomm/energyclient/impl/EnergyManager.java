@@ -6,12 +6,12 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.onosproject.security.AppGuard.checkPermission;
 import static org.onosproject.security.AppPermission.Type.DEVICE_READ;
 
+import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.inesctec.flexcomm.energyclient.api.Energy;
@@ -33,11 +33,15 @@ import org.onosproject.net.device.DeviceService;
 import org.onosproject.net.provider.AbstractListenerProviderRegistry;
 import org.onosproject.net.provider.AbstractProviderService;
 import org.onosproject.net.provider.ProviderId;
+import org.onosproject.openflow.controller.Dpid;
+import org.onosproject.openflow.controller.OpenFlowController;
+import org.onosproject.openflow.controller.OpenFlowMessageListener;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.projectfloodlight.openflow.protocol.OFMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,10 +77,18 @@ public class EnergyManager
   @Reference(cardinality = ReferenceCardinality.MANDATORY)
   protected DeviceService deviceService;
 
+  @Reference(cardinality = ReferenceCardinality.MANDATORY)
+  protected OpenFlowController openFlowController;
+
+  private long startTime = 0L;
+
+  private final InternalMessageListener listener = new InternalMessageListener();
+
   @Activate
   protected void activate() {
     store.setDelegate(delegate);
     eventDispatcher.addSink(EnergyEvent.class, listenerRegistry);
+    openFlowController.addMessageListener(listener);
 
     log.info("Started");
   }
@@ -216,8 +228,8 @@ public class EnergyManager
   }
 
   private EnergyPeriod currentEnergyPeriod(Energy energy) {
-    ZonedDateTime currentTime = Instant.now().atZone(ZoneOffset.UTC);
-    int index = (currentTime.getMinute() / 15) + currentTime.getHour() * 4;
+    Duration currentTime = Duration.ofNanos(System.nanoTime() - startTime);
+    int index = (currentTime.toMinutesPart() / 15) + currentTime.toHoursPart() * 4;
 
     EnergyPeriod.Builder builder = DefaultEnergyPeriod.builder()
         .setEmsId(energy.emsId())
@@ -278,6 +290,38 @@ public class EnergyManager
       EnergyEvent event = store.removeEnergy(emsId);
       post(event);
     }
+  }
+
+  private synchronized void setStartTime() {
+    if (startTime != 0L) {
+      startTime = System.nanoTime();
+    }
+    openFlowController.removeMessageListener(listener);
+    listener.disable();
+  }
+
+  private class InternalMessageListener implements OpenFlowMessageListener {
+
+    private boolean isDisable = false;
+
+    @Override
+    public void handleIncomingMessage(Dpid dpid, OFMessage msg) {
+      if (isDisable) {
+        return;
+      }
+
+      setStartTime();
+    }
+
+    @Override
+    public void handleOutgoingMessage(Dpid dpid, List<OFMessage> msgs) {
+      return;
+    }
+
+    private void disable() {
+      isDisable = true;
+    }
+
   }
 
 }

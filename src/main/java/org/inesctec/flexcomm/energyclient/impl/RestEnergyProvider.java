@@ -1,30 +1,24 @@
 package org.inesctec.flexcomm.energyclient.impl;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_AUTHORITY;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_AUTHORITY_DEFAULT;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.HTTP_PASSWORD;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.HTTP_PASSWORD_DEFAULT;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_PATH;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_PATH_DEFAULT;
 import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.UPDATE_RETRIES;
 import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.UPDATE_RETRIES_DEFAULT;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.HTTP_USERNAME;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.HTTP_USERNAME_DEFAULT;
+import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_AUTHORITY;
+import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_AUTHORITY_DEFAULT;
+import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_ESTIMATE_PATH;
+import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_ESTIMATE_PATH_DEFAULT;
+import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_FLEX_PATH;
+import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_FLEX_PATH_DEFAULT;
 import static org.onlab.util.Tools.get;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.InputStream;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -36,13 +30,11 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
-import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.inesctec.flexcomm.energyclient.api.Energy;
 import org.inesctec.flexcomm.energyclient.api.EnergyProvider;
 import org.inesctec.flexcomm.energyclient.api.EnergyProviderRegistry;
 import org.inesctec.flexcomm.energyclient.api.EnergyProviderService;
 import org.inesctec.flexcomm.energyclient.impl.objects.DefaultEnergy;
-import org.inesctec.flexcomm.energyclient.impl.objects.EnergyMessage;
 import org.onlab.util.SharedScheduledExecutorService;
 import org.onlab.util.SharedScheduledExecutors;
 import org.onosproject.cfg.ComponentConfigService;
@@ -62,23 +54,20 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.slf4j.Logger;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.google.common.collect.Maps;
 
 @Component(immediate = true, property = {
     URI_AUTHORITY + "=" + URI_AUTHORITY_DEFAULT,
-    URI_PATH + "=" + URI_PATH_DEFAULT,
-    HTTP_USERNAME + "=" + HTTP_USERNAME_DEFAULT,
-    HTTP_PASSWORD + "=" + HTTP_PASSWORD_DEFAULT,
+    URI_FLEX_PATH + "=" + URI_FLEX_PATH_DEFAULT,
+    URI_ESTIMATE_PATH + "=" + URI_ESTIMATE_PATH_DEFAULT,
     UPDATE_RETRIES + ":Integer=" + UPDATE_RETRIES_DEFAULT,
 })
 public class RestEnergyProvider extends AbstractProvider implements EnergyProvider {
 
+  private static final String QUERY_PARAM = "id";
   private static final String EMSID_KEY = "emsId";
-  private static final String TIMESTAMP_KEY = "timestamp";
-  private static final DateFormat REQUEST_TIMESTAMP_FORMATTER = new SimpleDateFormat("yyyy-MM-dd");
-  private static final DateFormat RESPONSE_TIMESTAMP_FORMATTER = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
 
   private final Logger log = getLogger(getClass());
 
@@ -93,11 +82,9 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
 
   private String energyURIAuthority = URI_AUTHORITY_DEFAULT;
 
-  private String energyURIPath = URI_PATH_DEFAULT;
+  private String energyURIFlexPath = URI_FLEX_PATH_DEFAULT;
 
-  private String energyHTTPUsername = HTTP_USERNAME_DEFAULT;
-
-  private String energyHTTPPassword = HTTP_PASSWORD_DEFAULT;
+  private String energyURIEstimatePath = URI_ESTIMATE_PATH_DEFAULT;
 
   private int energyUpdateRetries = UPDATE_RETRIES_DEFAULT;
 
@@ -127,7 +114,7 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
     deviceService.addListener(listener);
 
     client = ClientBuilder.newClient();
-    target = client.target("http://" + energyURIAuthority + "/").path(energyURIPath);
+    target = client.target("http://" + energyURIAuthority + "/");
 
     scheduledTask = schedulePolling();
 
@@ -162,21 +149,14 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
       energyURIAuthority = s;
     }
 
-    s = get(properties, URI_PATH);
+    s = get(properties, URI_FLEX_PATH);
     if (!isNullOrEmpty(s)) {
-      energyURIPath = s;
+      energyURIFlexPath = s;
     }
 
-    s = get(properties, HTTP_USERNAME);
-    if (!Objects.isNull(s)) {
-      energyHTTPUsername = s;
-      log.info("Username updated");
-    }
-
-    s = get(properties, HTTP_PASSWORD);
-    if (!Objects.isNull(s)) {
-      energyHTTPPassword = s;
-      log.info("Password updated");
+    s = get(properties, URI_ESTIMATE_PATH);
+    if (!isNullOrEmpty(s)) {
+      energyURIEstimatePath = s;
     }
 
     try {
@@ -188,15 +168,14 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
       // do nothing
     }
 
-    target = client.target("http://" + energyURIAuthority + "/").path(energyURIPath);
-    if (!energyHTTPUsername.isEmpty() && !energyHTTPPassword.isEmpty()) {
-      HttpAuthenticationFeature auth = HttpAuthenticationFeature.basic(energyHTTPUsername, energyHTTPPassword);
-      target.register(auth);
-    }
+    target = client.target("http://" + energyURIAuthority + "/");
 
-    log.info("Settings: target=http://{}/{}, retries={}", energyURIAuthority, energyURIPath, energyUpdateRetries);
+    log.info("Settings: target=http://{}, paths={} {}, retries={}", energyURIAuthority, energyURIFlexPath,
+        energyURIEstimatePath, energyUpdateRetries);
   }
 
+  // FIX:
+  // talvez por o manager a informar os providers quando o relogio começa
   private ScheduledFuture<?> schedulePolling() {
     Instant now = Instant.now();
     Instant next = now.with(ChronoField.SECOND_OF_DAY, 0).plus(1, ChronoUnit.DAYS);
@@ -206,49 +185,55 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
   }
 
   private void executeEnergyUpdate() {
-    deviceEmsIds.values().stream().collect(Collectors.toSet()).forEach(emsId -> updateEnergy(emsId, true));
+    deviceEmsIds.values().stream().collect(Collectors.toSet()).forEach(emsId -> updateEnergy(emsId));
   }
 
-  private void updateEnergy(String emsId, boolean verifyOutdated) {
-    WebTarget query = target.queryParam(EMSID_KEY, emsId);
+  private void updateEnergy(String emsId) {
+    WebTarget flexibilityQuery = target.path(energyURIFlexPath).queryParam(QUERY_PARAM, emsId);
+    WebTarget estimateQuery = target.path(energyURIEstimatePath).queryParam(QUERY_PARAM, emsId);
+
+    Map.Entry<String, List<Double>> flexibilityData = null;
+    Map.Entry<String, List<Double>> estimateData = null;
 
     for (int i = 0; i < (energyUpdateRetries + 1); ++i) {
-      EnergyMessage data = doRequest(query);
+      flexibilityData = doRequest(flexibilityQuery);
 
-      if (data == null) {
+      if (flexibilityData == null) {
         return;
       }
 
-      if (!data.getEmsId().equals(emsId)) {
+      if (!flexibilityData.getKey().equals(emsId)) {
         log.error("Received emsId does not match with query {}\n{}",
-            query, data);
+            flexibilityQuery, flexibilityData);
         return;
-      }
-
-      Instant responseTimestamp = parseTimestamp(data);
-      if (!verifyOutdated || Objects.equals(responseTimestamp, Instant.now().truncatedTo(ChronoUnit.DAYS))) {
-        Energy.Builder builder = DefaultEnergy.builder();
-        Energy energy = builder.setEmsId(data.getEmsId())
-            .setTimestamp(responseTimestamp)
-            .setFlexibilityArray(data.getFlexArrayConsumption())
-            .setEstimateArray(data.getFlexArrayEstimate())
-            .build();
-
-        providerService.updateEnergy(emsId, energy);
-        return;
-      } else {
-        log.warn("Received outdated energy info for emsId {}\nRepeating GET request in 30 seconds", emsId);
-        try {
-          TimeUnit.SECONDS.sleep(30);
-        } catch (InterruptedException e) {
-          log.error("Failed to wait 30 seconds\nInterrupting");
-          Thread.currentThread().interrupt();
-        }
       }
     }
+
+    for (int i = 0; i < (energyUpdateRetries + 1); ++i) {
+      estimateData = doRequest(estimateQuery);
+
+      if (estimateData == null) {
+        return;
+      }
+
+      if (!estimateData.getKey().equals(emsId)) {
+        log.error("Received emsId does not match with query {}\n{}",
+            estimateQuery, estimateData);
+        return;
+      }
+    }
+
+    Energy.Builder builder = DefaultEnergy.builder();
+    Energy energy = builder.setEmsId(emsId)
+        .setTimestamp(Instant.now().truncatedTo(ChronoUnit.DAYS))
+        .setFlexibilityArray(flexibilityData.getValue())
+        .setEstimateArray(estimateData.getValue())
+        .build();
+
+    providerService.updateEnergy(emsId, energy);
   }
 
-  private EnergyMessage doRequest(WebTarget query) {
+  private Map.Entry<String, List<Double>> doRequest(WebTarget query) {
     Response response;
     try {
       response = query.request().get();
@@ -265,11 +250,12 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
       return null;
     }
 
-    List<EnergyMessage> energyResponse;
+    Map<String, List<Double>> energyResponse;
     ObjectMapper oMapper = new ObjectMapper();
     try {
       energyResponse = oMapper.readValue(response.readEntity(InputStream.class),
-          TypeFactory.defaultInstance().constructCollectionType(List.class, EnergyMessage.class));
+          new TypeReference<Map<String, List<Double>>>() {
+          });
     } catch (Exception e) {
       log.error("Response body format is invalid: {}", e.getCause().getMessage());
       return null;
@@ -280,51 +266,12 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
       return null;
     }
 
-    return energyResponse.get(0);
-  }
-
-  private Instant parseTimestamp(EnergyMessage data) {
-    Instant responseTimestamp;
-    try {
-      responseTimestamp = RESPONSE_TIMESTAMP_FORMATTER.parse(data.getTimestamp()).toInstant()
-          .truncatedTo(ChronoUnit.DAYS);
-    } catch (ParseException e) {
-      log.warn("Failed to parse timestamp with invalid format: {}", e.getCause().getMessage());
-      responseTimestamp = null;
-    }
-    return responseTimestamp;
+    return energyResponse.entrySet().iterator().next();
   }
 
   @Override
   public Energy performTimestampRequest(String emsId, Instant timestamp) {
-    WebTarget query = target.queryParam(EMSID_KEY, emsId).queryParam(TIMESTAMP_KEY,
-        REQUEST_TIMESTAMP_FORMATTER.format(timestamp));
-    EnergyMessage data = doRequest(query);
-    if (data == null) {
-      return null;
-    }
-
-    if (!data.getEmsId().equals(emsId)) {
-      log.error("Received emsId does not match with query {}\n{}",
-          query, data);
-      return null;
-    }
-
-    Instant responseTimestamp = parseTimestamp(data);
-    if (!Objects.equals(responseTimestamp, timestamp.truncatedTo(ChronoUnit.DAYS))) {
-      log.error("Received timestamp does not match with query {}\n{}",
-          query, data);
-      return null;
-    }
-
-    Energy.Builder builder = DefaultEnergy.builder();
-    Energy energy = builder.setEmsId(data.getEmsId())
-        .setTimestamp(responseTimestamp)
-        .setFlexibilityArray(data.getFlexArrayConsumption())
-        .setEstimateArray(data.getFlexArrayEstimate())
-        .build();
-    providerService.updateStaticEnergy(emsId, energy);
-    return energy;
+    return null;
   }
 
   private class InternalEnergyProvider implements DeviceListener {
@@ -345,7 +292,7 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
           if (device.annotations().keys().contains(EMSID_KEY)) {
             emsId = device.annotations().value(EMSID_KEY);
             if (!deviceEmsIds.values().contains(emsId)) {
-              updateEnergy(emsId, false);
+              updateEnergy(emsId);
             }
             deviceEmsIds.put(device.id(), emsId);
           } else {
