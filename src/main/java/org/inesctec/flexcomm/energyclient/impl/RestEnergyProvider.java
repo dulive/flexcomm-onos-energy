@@ -14,15 +14,11 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.InputStream;
 import java.time.Instant;
-import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
@@ -35,8 +31,6 @@ import org.inesctec.flexcomm.energyclient.api.EnergyProvider;
 import org.inesctec.flexcomm.energyclient.api.EnergyProviderRegistry;
 import org.inesctec.flexcomm.energyclient.api.EnergyProviderService;
 import org.inesctec.flexcomm.energyclient.impl.objects.DefaultEnergy;
-import org.onlab.util.SharedScheduledExecutorService;
-import org.onlab.util.SharedScheduledExecutors;
 import org.onosproject.cfg.ComponentConfigService;
 import org.onosproject.net.Device;
 import org.onosproject.net.DeviceId;
@@ -96,9 +90,6 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
 
   private WebTarget target;
 
-  private final SharedScheduledExecutorService energyExecutor = SharedScheduledExecutors.getPoolThreadExecutor();
-  private ScheduledFuture<?> scheduledTask;
-
   private Map<DeviceId, String> deviceEmsIds = Maps.newConcurrentMap();
 
   public RestEnergyProvider() {
@@ -116,8 +107,6 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
     client = ClientBuilder.newClient();
     target = client.target("http://" + energyURIAuthority + "/");
 
-    scheduledTask = schedulePolling();
-
     modified(context);
 
     log.info("Started");
@@ -134,8 +123,6 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
     providerService = null;
 
     deviceEmsIds.clear();
-
-    scheduledTask.cancel(true);
 
     log.info("Stopped");
   }
@@ -172,20 +159,6 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
 
     log.info("Settings: target=http://{}, paths={} {}, retries={}", energyURIAuthority, energyURIFlexPath,
         energyURIEstimatePath, energyUpdateRetries);
-  }
-
-  // FIX:
-  // talvez por o manager a informar os providers quando o relogio começa
-  private ScheduledFuture<?> schedulePolling() {
-    Instant now = Instant.now();
-    Instant next = now.with(ChronoField.SECOND_OF_DAY, 0).plus(1, ChronoUnit.DAYS);
-
-    return energyExecutor.scheduleAtFixedRate(this::executeEnergyUpdate, now.until(next, ChronoUnit.SECONDS),
-        TimeUnit.DAYS.toSeconds(1), TimeUnit.SECONDS, true);
-  }
-
-  private void executeEnergyUpdate() {
-    deviceEmsIds.values().stream().collect(Collectors.toSet()).forEach(emsId -> updateEnergy(emsId));
   }
 
   private void updateEnergy(String emsId) {
