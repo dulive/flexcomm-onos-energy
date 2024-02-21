@@ -1,16 +1,16 @@
 package org.inesctec.flexcomm.energyclient.impl;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_AUTHORITY;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_AUTHORITY_DEFAULT;
 import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.HTTP_PASSWORD;
 import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.HTTP_PASSWORD_DEFAULT;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_PATH;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_PATH_DEFAULT;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.UPDATE_RETRIES;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.UPDATE_RETRIES_DEFAULT;
 import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.HTTP_USERNAME;
 import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.HTTP_USERNAME_DEFAULT;
+import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.UPDATE_RETRIES;
+import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.UPDATE_RETRIES_DEFAULT;
+import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_AUTHORITY;
+import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_AUTHORITY_DEFAULT;
+import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_PATH;
+import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_PATH_DEFAULT;
 import static org.onlab.util.Tools.get;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -19,7 +19,6 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.util.Dictionary;
 import java.util.List;
@@ -199,7 +198,7 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
 
   private ScheduledFuture<?> schedulePolling() {
     Instant now = Instant.now();
-    Instant next = now.with(ChronoField.SECOND_OF_DAY, 0).plus(1, ChronoUnit.DAYS);
+    Instant next = now.truncatedTo(ChronoUnit.DAYS).plus(1, ChronoUnit.DAYS);
 
     return energyExecutor.scheduleAtFixedRate(this::executeEnergyUpdate, now.until(next, ChronoUnit.SECONDS),
         TimeUnit.DAYS.toSeconds(1), TimeUnit.SECONDS, true);
