@@ -12,6 +12,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.inesctec.flexcomm.energyclient.api.Energy;
@@ -165,7 +166,8 @@ public class EnergyManager
   public Collection<EnergyPeriod> getCurrentEnergyPeriod() {
     checkPermission(DEVICE_READ);
 
-    return store.getEnergy().stream().map((Energy e) -> currentEnergyPeriod(e)).collect(ImmutableSet.toImmutableSet());
+    return store.getEnergy().stream().filter(Objects::nonNull).map(this::currentEnergyPeriod)
+        .collect(ImmutableSet.toImmutableSet());
   }
 
   @Override
@@ -173,7 +175,7 @@ public class EnergyManager
     checkPermission(DEVICE_READ);
     checkNotNull(timestamp, TIMESTAMP_NULL);
 
-    return getEnergyEachDevice(timestamp).stream().map((Energy e) -> currentEnergyPeriod(e))
+    return getEnergyEachDevice(timestamp).stream().filter(Objects::nonNull).map(this::currentEnergyPeriod)
         .collect(ImmutableSet.toImmutableSet());
   }
 
@@ -182,7 +184,8 @@ public class EnergyManager
     checkPermission(DEVICE_READ);
     checkArgument(!isNullOrEmpty(emsId), EMS_ID_EMPTY_NULL);
 
-    return currentEnergyPeriod(store.getEnergy(emsId));
+    Energy e = store.getEnergy(emsId);
+    return e != null ? currentEnergyPeriod(e) : null;
   }
 
   @Override
@@ -199,7 +202,8 @@ public class EnergyManager
     checkArgument(!isNullOrEmpty(emsId), EMS_ID_EMPTY_NULL);
     checkNotNull(timestamp, TIMESTAMP_NULL);
 
-    return currentEnergyPeriod(getEnergy(emsId, timestamp));
+    Energy e = getEnergy(emsId, timestamp);
+    return e != null ? currentEnergyPeriod(e) : null;
   }
 
   @Override
