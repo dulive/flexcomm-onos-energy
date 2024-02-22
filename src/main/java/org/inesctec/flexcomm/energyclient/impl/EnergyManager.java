@@ -297,7 +297,7 @@ public class EnergyManager
   }
 
   private synchronized void setStartTime() {
-    if (startTime != 0L) {
+    if (startTime == 0L) {
       startTime = System.nanoTime();
     }
     openFlowController.removeMessageListener(listener);
