@@ -19,6 +19,7 @@ import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
@@ -171,28 +172,42 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
     for (int i = 0; i < (energyUpdateRetries + 1); ++i) {
       flexibilityData = doRequest(flexibilityQuery);
 
-      if (flexibilityData == null) {
-        return;
+      if (flexibilityData != null) {
+        if (!flexibilityData.getKey().equals(emsId)) {
+          log.error("Received emsId does not match with query {}\n{}",
+              flexibilityQuery, flexibilityData);
+          return;
+        }
+        break;
       }
 
-      if (!flexibilityData.getKey().equals(emsId)) {
-        log.error("Received emsId does not match with query {}\n{}",
-            flexibilityQuery, flexibilityData);
-        return;
+      log.warn("Repeating flexibility GET request in 10 seconds");
+      try {
+        TimeUnit.SECONDS.sleep(10);
+      } catch (InterruptedException e) {
+        log.error("Failed to wait 10 seconds\nInterrupting");
+        Thread.currentThread().interrupt();
       }
     }
 
     for (int i = 0; i < (energyUpdateRetries + 1); ++i) {
       estimateData = doRequest(estimateQuery);
 
-      if (estimateData == null) {
-        return;
+      if (estimateData != null) {
+        if (!estimateData.getKey().equals(emsId)) {
+          log.error("Received emsId does not match with query {}\n{}",
+              estimateQuery, estimateData);
+          return;
+        }
+        break;
       }
 
-      if (!estimateData.getKey().equals(emsId)) {
-        log.error("Received emsId does not match with query {}\n{}",
-            estimateQuery, estimateData);
-        return;
+      log.warn("Repeating estimate GET request in 10 seconds");
+      try {
+        TimeUnit.SECONDS.sleep(10);
+      } catch (InterruptedException e) {
+        log.error("Failed to wait 10 seconds\nInterrupting");
+        Thread.currentThread().interrupt();
       }
     }
 
