@@ -20,4 +20,7 @@ public final class OsgiPropertyConstants {
 
   public static final String UPDATE_RETRIES = "energyUpdateRetries";
   public static final int UPDATE_RETRIES_DEFAULT = 10;
+
+  public static final String UPDATE_RETRIES_DELAY = "energyUpdateRetriesDelay";
+  public static final long UPDATE_RETRIES_DELAY_DEFAULT = 10;
 }

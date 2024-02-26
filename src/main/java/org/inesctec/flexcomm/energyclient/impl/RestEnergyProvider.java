@@ -1,17 +1,21 @@
 package org.inesctec.flexcomm.energyclient.impl;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.util.concurrent.Executors.newScheduledThreadPool;
 import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.HTTP_PASSWORD;
 import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.HTTP_PASSWORD_DEFAULT;
 import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.HTTP_USERNAME;
 import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.HTTP_USERNAME_DEFAULT;
 import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.UPDATE_RETRIES;
 import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.UPDATE_RETRIES_DEFAULT;
+import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.UPDATE_RETRIES_DELAY;
+import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.UPDATE_RETRIES_DELAY_DEFAULT;
 import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_AUTHORITY;
 import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_AUTHORITY_DEFAULT;
 import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_PATH;
 import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_PATH_DEFAULT;
 import static org.onlab.util.Tools.get;
+import static org.onlab.util.Tools.groupedThreads;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.InputStream;
@@ -25,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -42,8 +46,6 @@ import org.inesctec.flexcomm.energyclient.api.EnergyProviderRegistry;
 import org.inesctec.flexcomm.energyclient.api.EnergyProviderService;
 import org.inesctec.flexcomm.energyclient.impl.objects.DefaultEnergy;
 import org.inesctec.flexcomm.energyclient.impl.objects.EnergyMessage;
-import org.onlab.util.SharedScheduledExecutorService;
-import org.onlab.util.SharedScheduledExecutors;
 import org.onosproject.cfg.ComponentConfigService;
 import org.onosproject.net.Device;
 import org.onosproject.net.DeviceId;
@@ -71,6 +73,7 @@ import com.google.common.collect.Maps;
     HTTP_USERNAME + "=" + HTTP_USERNAME_DEFAULT,
     HTTP_PASSWORD + "=" + HTTP_PASSWORD_DEFAULT,
     UPDATE_RETRIES + ":Integer=" + UPDATE_RETRIES_DEFAULT,
+    UPDATE_RETRIES_DELAY + ":Long=" + UPDATE_RETRIES_DELAY_DEFAULT,
 })
 public class RestEnergyProvider extends AbstractProvider implements EnergyProvider {
 
@@ -78,6 +81,7 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
   private static final String TIMESTAMP_KEY = "timestamp";
   private static final DateFormat REQUEST_TIMESTAMP_FORMATTER = new SimpleDateFormat("yyyy-MM-dd");
   private static final DateFormat RESPONSE_TIMESTAMP_FORMATTER = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
+  private static final int NUM_THREADS = 4;
 
   private final Logger log = getLogger(getClass());
 
@@ -100,6 +104,8 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
 
   private int energyUpdateRetries = UPDATE_RETRIES_DEFAULT;
 
+  private long energyUpdateRetriesDelay = UPDATE_RETRIES_DELAY_DEFAULT;
+
   private EnergyProviderService providerService;
 
   private final InternalEnergyProvider listener = new InternalEnergyProvider();
@@ -108,8 +114,7 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
 
   private WebTarget target;
 
-  private final SharedScheduledExecutorService energyExecutor = SharedScheduledExecutors.getPoolThreadExecutor();
-  private ScheduledFuture<?> scheduledTask;
+  private ScheduledExecutorService energyExecutor;
 
   private Map<DeviceId, String> deviceEmsIds = Maps.newConcurrentMap();
 
@@ -121,6 +126,9 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
   public void activate(ComponentContext context) {
     cfgService.registerProperties(getClass());
 
+    energyExecutor = newScheduledThreadPool(NUM_THREADS,
+        groupedThreads("inesctec/flexcomm/energy-client", "energy-updater", log));
+
     providerService = providerRegistry.register(this);
 
     deviceService.addListener(listener);
@@ -128,7 +136,7 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
     client = ClientBuilder.newClient();
     target = client.target("http://" + energyURIAuthority + "/").path(energyURIPath);
 
-    scheduledTask = schedulePolling();
+    schedulePolling();
 
     modified(context);
 
@@ -138,6 +146,10 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
   @Deactivate
   public void deactivate(ComponentContext context) {
     cfgService.unregisterProperties(getClass(), false);
+
+    energyExecutor.shutdownNow();
+    energyExecutor = null;
+
     listener.disable();
 
     deviceService.removeListener(listener);
@@ -146,8 +158,6 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
     providerService = null;
 
     deviceEmsIds.clear();
-
-    scheduledTask.cancel(true);
 
     log.info("Stopped");
   }
@@ -183,6 +193,11 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
       if (!isNullOrEmpty(s)) {
         energyUpdateRetries = Integer.parseInt(s.trim());
       }
+
+      s = get(properties, UPDATE_RETRIES_DELAY);
+      if (!isNullOrEmpty(s)) {
+        energyUpdateRetriesDelay = Long.parseLong(s.trim());
+      }
     } catch (NumberFormatException | ClassCastException e) {
       // do nothing
     }
@@ -193,22 +208,24 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
       target.register(auth);
     }
 
-    log.info("Settings: target=http://{}/{}, retries={}", energyURIAuthority, energyURIPath, energyUpdateRetries);
+    log.info("Settings: target=http://{}/{}, retries={}, delay={}", energyURIAuthority, energyURIPath,
+        energyUpdateRetries, energyUpdateRetriesDelay);
   }
 
-  private ScheduledFuture<?> schedulePolling() {
+  private void schedulePolling() {
     Instant now = Instant.now();
     Instant next = now.truncatedTo(ChronoUnit.DAYS).plus(1, ChronoUnit.DAYS);
 
-    return energyExecutor.scheduleAtFixedRate(this::executeEnergyUpdate, now.until(next, ChronoUnit.SECONDS),
-        TimeUnit.DAYS.toSeconds(1), TimeUnit.SECONDS, true);
+    energyExecutor.scheduleAtFixedRate(this::executeEnergyUpdate, now.until(next, ChronoUnit.SECONDS),
+        TimeUnit.DAYS.toSeconds(1), TimeUnit.SECONDS);
   }
 
   private void executeEnergyUpdate() {
-    deviceEmsIds.values().stream().collect(Collectors.toSet()).forEach(emsId -> updateEnergy(emsId, true));
+    deviceEmsIds.values().stream().collect(Collectors.toSet())
+        .forEach(emsId -> updateEnergy(emsId, true, energyUpdateRetriesDelay));
   }
 
-  private void updateEnergy(String emsId, boolean verifyOutdated) {
+  private void updateEnergy(String emsId, boolean verifyOutdated, long retries) {
     WebTarget query = target.queryParam(EMSID_KEY, emsId);
 
     for (int i = 0; i < (energyUpdateRetries + 1); ++i) {
@@ -236,12 +253,11 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
         providerService.updateEnergy(emsId, energy);
         return;
       } else {
-        log.warn("Received outdated energy info for emsId {}\nRepeating GET request in 30 seconds", emsId);
-        try {
-          TimeUnit.SECONDS.sleep(30);
-        } catch (InterruptedException e) {
-          log.error("Failed to wait 30 seconds\nInterrupting");
-          Thread.currentThread().interrupt();
+        log.warn("Received outdated energy info for emsId {}", emsId);
+        if (retries > 0) {
+          log.warn("Repeating GET request for emsId {} in {} seconds", emsId, energyUpdateRetriesDelay);
+          energyExecutor.schedule(() -> updateEnergy(emsId, verifyOutdated, retries - 1), energyUpdateRetriesDelay,
+              TimeUnit.SECONDS);
         }
       }
     }
@@ -344,7 +360,7 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
           if (device.annotations().keys().contains(EMSID_KEY)) {
             emsId = device.annotations().value(EMSID_KEY);
             if (!deviceEmsIds.values().contains(emsId)) {
-              updateEnergy(emsId, false);
+              updateEnergy(emsId, false, 0L);
             }
             deviceEmsIds.put(device.id(), emsId);
           } else {
