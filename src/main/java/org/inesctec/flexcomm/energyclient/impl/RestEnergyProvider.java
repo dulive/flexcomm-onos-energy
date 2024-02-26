@@ -1,8 +1,6 @@
 package org.inesctec.flexcomm.energyclient.impl;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.UPDATE_RETRIES;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.UPDATE_RETRIES_DEFAULT;
 import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_AUTHORITY;
 import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_AUTHORITY_DEFAULT;
 import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_ESTIMATE_PATH;
@@ -19,7 +17,6 @@ import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
@@ -56,8 +53,7 @@ import com.google.common.collect.Maps;
 @Component(immediate = true, property = {
     URI_AUTHORITY + "=" + URI_AUTHORITY_DEFAULT,
     URI_FLEX_PATH + "=" + URI_FLEX_PATH_DEFAULT,
-    URI_ESTIMATE_PATH + "=" + URI_ESTIMATE_PATH_DEFAULT,
-    UPDATE_RETRIES + ":Integer=" + UPDATE_RETRIES_DEFAULT,
+    URI_ESTIMATE_PATH + "=" + URI_ESTIMATE_PATH_DEFAULT
 })
 public class RestEnergyProvider extends AbstractProvider implements EnergyProvider {
 
@@ -80,8 +76,6 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
   private String energyURIFlexPath = URI_FLEX_PATH_DEFAULT;
 
   private String energyURIEstimatePath = URI_ESTIMATE_PATH_DEFAULT;
-
-  private int energyUpdateRetries = UPDATE_RETRIES_DEFAULT;
 
   private EnergyProviderService providerService;
 
@@ -147,19 +141,10 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
       energyURIEstimatePath = s;
     }
 
-    try {
-      s = get(properties, UPDATE_RETRIES);
-      if (!isNullOrEmpty(s)) {
-        energyUpdateRetries = Integer.parseInt(s.trim());
-      }
-    } catch (NumberFormatException | ClassCastException e) {
-      // do nothing
-    }
-
     target = client.target("http://" + energyURIAuthority + "/");
 
-    log.info("Settings: target=http://{}, paths={} {}, retries={}", energyURIAuthority, energyURIFlexPath,
-        energyURIEstimatePath, energyUpdateRetries);
+    log.info("Settings: target=http://{}, paths={} {}", energyURIAuthority, energyURIFlexPath,
+        energyURIEstimatePath);
   }
 
   private void updateEnergy(String emsId) {
@@ -169,46 +154,19 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
     Map.Entry<String, List<Double>> flexibilityData = null;
     Map.Entry<String, List<Double>> estimateData = null;
 
-    for (int i = 0; i < (energyUpdateRetries + 1); ++i) {
-      flexibilityData = doRequest(flexibilityQuery);
+    flexibilityData = doRequest(flexibilityQuery);
+    estimateData = doRequest(estimateQuery);
 
-      if (flexibilityData != null) {
-        if (!flexibilityData.getKey().equals(emsId)) {
-          log.error("Received emsId does not match with query {}\n{}",
-              flexibilityQuery, flexibilityData);
-          return;
-        }
-        break;
-      }
-
-      log.warn("Repeating flexibility GET request in 10 seconds");
-      try {
-        TimeUnit.SECONDS.sleep(10);
-      } catch (InterruptedException e) {
-        log.error("Failed to wait 10 seconds\nInterrupting");
-        Thread.currentThread().interrupt();
-      }
+    if (!flexibilityData.getKey().equals(emsId)) {
+      log.error("Received emsId does not match with query {}\n{}",
+          flexibilityQuery, flexibilityData);
+      return;
     }
 
-    for (int i = 0; i < (energyUpdateRetries + 1); ++i) {
-      estimateData = doRequest(estimateQuery);
-
-      if (estimateData != null) {
-        if (!estimateData.getKey().equals(emsId)) {
-          log.error("Received emsId does not match with query {}\n{}",
-              estimateQuery, estimateData);
-          return;
-        }
-        break;
-      }
-
-      log.warn("Repeating estimate GET request in 10 seconds");
-      try {
-        TimeUnit.SECONDS.sleep(10);
-      } catch (InterruptedException e) {
-        log.error("Failed to wait 10 seconds\nInterrupting");
-        Thread.currentThread().interrupt();
-      }
+    if (!estimateData.getKey().equals(emsId)) {
+      log.error("Received emsId does not match with query {}\n{}",
+          estimateQuery, estimateData);
+      return;
     }
 
     Energy.Builder builder = DefaultEnergy.builder();

@@ -14,7 +14,4 @@ public final class OsgiPropertyConstants {
 
   public static final String URI_ESTIMATE_PATH = "energyURIEstimatePath";
   public static final String URI_ESTIMATE_PATH_DEFAULT = "estimate";
-
-  public static final String UPDATE_RETRIES = "energyUpdateRetries";
-  public static final int UPDATE_RETRIES_DEFAULT = 10;
 }
