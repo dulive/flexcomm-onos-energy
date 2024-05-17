@@ -2,7 +2,7 @@ package org.inesctec.flexcomm.energyclient.api;
 
 import org.onosproject.event.AbstractEvent;
 
-public class EnergyEvent extends AbstractEvent<EnergyEvent.Type, Energy> {
+public class FlexcommEnergyEvent extends AbstractEvent<FlexcommEnergyEvent.Type, Energy> {
 
   // TODO: Add more relevant energy events
   public enum Type {
@@ -12,11 +12,11 @@ public class EnergyEvent extends AbstractEvent<EnergyEvent.Type, Energy> {
     STATIC_ENERGY_REMOVED
   }
 
-  public EnergyEvent(Type type, Energy subject) {
+  public FlexcommEnergyEvent(Type type, Energy subject) {
     super(type, subject);
   }
 
-  public EnergyEvent(Type type, Energy subject, long time) {
+  public FlexcommEnergyEvent(Type type, Energy subject, long time) {
     super(type, subject, time);
   }
 }

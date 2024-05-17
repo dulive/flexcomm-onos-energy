@@ -41,9 +41,9 @@ import javax.ws.rs.core.Response;
 
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.inesctec.flexcomm.energyclient.api.Energy;
-import org.inesctec.flexcomm.energyclient.api.EnergyProvider;
-import org.inesctec.flexcomm.energyclient.api.EnergyProviderRegistry;
-import org.inesctec.flexcomm.energyclient.api.EnergyProviderService;
+import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyProvider;
+import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyProviderRegistry;
+import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyProviderService;
 import org.inesctec.flexcomm.energyclient.impl.objects.DefaultEnergy;
 import org.inesctec.flexcomm.energyclient.impl.objects.EnergyMessage;
 import org.onosproject.cfg.ComponentConfigService;
@@ -75,7 +75,7 @@ import com.google.common.collect.Maps;
     UPDATE_RETRIES + ":Integer=" + UPDATE_RETRIES_DEFAULT,
     UPDATE_RETRIES_DELAY + ":Long=" + UPDATE_RETRIES_DELAY_DEFAULT,
 })
-public class RestEnergyProvider extends AbstractProvider implements EnergyProvider {
+public class RestFlexcommEnergyProvider extends AbstractProvider implements FlexcommEnergyProvider {
 
   private static final String EMSID_KEY = "emsId";
   private static final String TIMESTAMP_KEY = "timestamp";
@@ -92,7 +92,7 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
   protected DeviceService deviceService;
 
   @Reference(cardinality = ReferenceCardinality.MANDATORY)
-  protected EnergyProviderRegistry providerRegistry;
+  protected FlexcommEnergyProviderRegistry providerRegistry;
 
   private String energyURIAuthority = URI_AUTHORITY_DEFAULT;
 
@@ -106,7 +106,7 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
 
   private long energyUpdateRetriesDelay = UPDATE_RETRIES_DELAY_DEFAULT;
 
-  private EnergyProviderService providerService;
+  private FlexcommEnergyProviderService providerService;
 
   private final InternalEnergyProvider listener = new InternalEnergyProvider();
 
@@ -118,7 +118,7 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
 
   private Map<DeviceId, String> deviceEmsIds = Maps.newConcurrentMap();
 
-  public RestEnergyProvider() {
+  public RestFlexcommEnergyProvider() {
     super(new ProviderId("rest", "org.inesctec.provider.energy"));
   }
 

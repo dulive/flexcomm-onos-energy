@@ -8,6 +8,7 @@ import java.util.List;
 import org.onosproject.net.Annotated;
 import org.onosproject.net.Annotations;
 
+// TODO: change name
 public interface Energy extends Annotated {
 
   String emsId();

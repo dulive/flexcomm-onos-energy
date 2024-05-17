@@ -2,7 +2,7 @@ package org.inesctec.flexcomm.energyclient.api;
 
 import org.onosproject.net.provider.ProviderService;
 
-public interface EnergyProviderService extends ProviderService<EnergyProvider> {
+public interface FlexcommEnergyProviderService extends ProviderService<FlexcommEnergyProvider> {
 
   void updateEnergy(String emsId, Energy energy);
 

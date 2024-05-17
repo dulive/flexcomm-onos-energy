@@ -1,17 +1,17 @@
 package org.inesctec.flexcomm.energyclient.impl;
 
-import static org.inesctec.flexcomm.energyclient.api.EnergyEvent.Type.ENERGY_REMOVED;
-import static org.inesctec.flexcomm.energyclient.api.EnergyEvent.Type.ENERGY_UPDATED;
-import static org.inesctec.flexcomm.energyclient.api.EnergyEvent.Type.STATIC_ENERGY_REMOVED;
-import static org.inesctec.flexcomm.energyclient.api.EnergyEvent.Type.STATIC_ENERGY_UPDATED;
+import static org.inesctec.flexcomm.energyclient.api.FlexcommEnergyEvent.Type.ENERGY_REMOVED;
+import static org.inesctec.flexcomm.energyclient.api.FlexcommEnergyEvent.Type.ENERGY_UPDATED;
+import static org.inesctec.flexcomm.energyclient.api.FlexcommEnergyEvent.Type.STATIC_ENERGY_REMOVED;
+import static org.inesctec.flexcomm.energyclient.api.FlexcommEnergyEvent.Type.STATIC_ENERGY_UPDATED;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Collection;
 
 import org.inesctec.flexcomm.energyclient.api.Energy;
-import org.inesctec.flexcomm.energyclient.api.EnergyEvent;
-import org.inesctec.flexcomm.energyclient.api.EnergyStore;
-import org.inesctec.flexcomm.energyclient.api.EnergyStoreDelegate;
+import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyEvent;
+import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyStore;
+import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyStoreDelegate;
 import org.onlab.util.KryoNamespace;
 import org.onosproject.store.AbstractStore;
 import org.onosproject.store.serializers.KryoNamespaces;
@@ -29,8 +29,9 @@ import org.slf4j.Logger;
 
 import com.google.common.collect.ImmutableSet;
 
-@Component(immediate = true, service = EnergyStore.class)
-public class DistributedEnergyStore extends AbstractStore<EnergyEvent, EnergyStoreDelegate> implements EnergyStore {
+@Component(immediate = true, service = FlexcommEnergyStore.class)
+public class DistributedFlexcommEnergyStore extends AbstractStore<FlexcommEnergyEvent, FlexcommEnergyStoreDelegate>
+    implements FlexcommEnergyStore {
 
   private final Logger log = getLogger(getClass());
 
@@ -76,14 +77,14 @@ public class DistributedEnergyStore extends AbstractStore<EnergyEvent, EnergySto
   }
 
   @Override
-  public EnergyEvent updateEnergy(String emsId, Energy energy) {
+  public FlexcommEnergyEvent updateEnergy(String emsId, Energy energy) {
     energyData.put(emsId, energy);
 
     return null;
   }
 
   @Override
-  public EnergyEvent updateStaticEnergy(String emsId, Energy energy) {
+  public FlexcommEnergyEvent updateStaticEnergy(String emsId, Energy energy) {
     staticEnergyData.put(emsId, energy);
     return null;
   }
@@ -109,7 +110,7 @@ public class DistributedEnergyStore extends AbstractStore<EnergyEvent, EnergySto
   }
 
   @Override
-  public EnergyEvent removeEnergy(String emsId) {
+  public FlexcommEnergyEvent removeEnergy(String emsId) {
     energyData.remove(emsId);
     staticEnergyData.remove(emsId);
 
@@ -122,10 +123,10 @@ public class DistributedEnergyStore extends AbstractStore<EnergyEvent, EnergySto
       Energy energy = event.value();
       switch (event.type()) {
         case PUT:
-          notifyDelegate(new EnergyEvent(ENERGY_UPDATED, energy));
+          notifyDelegate(new FlexcommEnergyEvent(ENERGY_UPDATED, energy));
           break;
         case REMOVE:
-          notifyDelegate(new EnergyEvent(ENERGY_REMOVED, energy));
+          notifyDelegate(new FlexcommEnergyEvent(ENERGY_REMOVED, energy));
           break;
         default:
           break;
@@ -139,10 +140,10 @@ public class DistributedEnergyStore extends AbstractStore<EnergyEvent, EnergySto
       Energy energy = event.value();
       switch (event.type()) {
         case PUT:
-          notifyDelegate(new EnergyEvent(STATIC_ENERGY_UPDATED, energy));
+          notifyDelegate(new FlexcommEnergyEvent(STATIC_ENERGY_UPDATED, energy));
           break;
         case REMOVE:
-          notifyDelegate(new EnergyEvent(STATIC_ENERGY_REMOVED, energy));
+          notifyDelegate(new FlexcommEnergyEvent(STATIC_ENERGY_REMOVED, energy));
           break;
         default:
           break;

@@ -16,15 +16,15 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.inesctec.flexcomm.energyclient.api.Energy;
-import org.inesctec.flexcomm.energyclient.api.EnergyEvent;
-import org.inesctec.flexcomm.energyclient.api.EnergyListener;
+import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyEvent;
+import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyListener;
 import org.inesctec.flexcomm.energyclient.api.EnergyPeriod;
-import org.inesctec.flexcomm.energyclient.api.EnergyProvider;
-import org.inesctec.flexcomm.energyclient.api.EnergyProviderRegistry;
-import org.inesctec.flexcomm.energyclient.api.EnergyProviderService;
-import org.inesctec.flexcomm.energyclient.api.EnergyService;
-import org.inesctec.flexcomm.energyclient.api.EnergyStore;
-import org.inesctec.flexcomm.energyclient.api.EnergyStoreDelegate;
+import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyProvider;
+import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyProviderRegistry;
+import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyProviderService;
+import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyService;
+import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyStore;
+import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyStoreDelegate;
 import org.inesctec.flexcomm.energyclient.impl.objects.DefaultEnergyPeriod;
 import org.onosproject.cfg.ComponentConfigService;
 import org.onosproject.core.CoreService;
@@ -45,13 +45,15 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.ImmutableSet;
 
 // TODO: have an annotation on the device that define which energy provider to use (scheme)
+// hava an annotation on hte device that define timezone
 @Component(immediate = true, service = {
-    EnergyService.class,
-    EnergyProviderRegistry.class
+    FlexcommEnergyService.class,
+    FlexcommEnergyProviderRegistry.class
 })
-public class EnergyManager
-    extends AbstractListenerProviderRegistry<EnergyEvent, EnergyListener, EnergyProvider, EnergyProviderService>
-    implements EnergyService, EnergyProviderRegistry {
+public class FlexcommEnergyManager
+    extends
+    AbstractListenerProviderRegistry<FlexcommEnergyEvent, FlexcommEnergyListener, FlexcommEnergyProvider, FlexcommEnergyProviderService>
+    implements FlexcommEnergyService, FlexcommEnergyProviderRegistry {
 
   private static final String EMSID_KEY = "emsId";
   private static final String EMS_ID_EMPTY_NULL = "Ems ID cannot be null or empty";
@@ -60,10 +62,10 @@ public class EnergyManager
 
   private final Logger log = LoggerFactory.getLogger(getClass());
 
-  private final EnergyStoreDelegate delegate = new InternalEnergyStoreDelegate();
+  private final FlexcommEnergyStoreDelegate delegate = new InternalEnergyStoreDelegate();
 
   @Reference(cardinality = ReferenceCardinality.MANDATORY)
-  protected EnergyStore store;
+  protected FlexcommEnergyStore store;
 
   @Reference(cardinality = ReferenceCardinality.MANDATORY)
   protected CoreService coreService;
@@ -77,7 +79,7 @@ public class EnergyManager
   @Activate
   protected void activate() {
     store.setDelegate(delegate);
-    eventDispatcher.addSink(EnergyEvent.class, listenerRegistry);
+    eventDispatcher.addSink(FlexcommEnergyEvent.class, listenerRegistry);
 
     log.info("Started");
   }
@@ -85,7 +87,7 @@ public class EnergyManager
   @Deactivate
   protected void deactivate() {
     store.unsetDelegate(delegate);
-    eventDispatcher.removeSink(EnergyEvent.class);
+    eventDispatcher.removeSink(FlexcommEnergyEvent.class);
 
     log.info("Stopped");
   }
@@ -130,7 +132,7 @@ public class EnergyManager
     Energy res = store.getStaticEnergy(emsId);
     if (res == null || !res.timestamp().equals(timestamp.truncatedTo(ChronoUnit.DAYS))) {
       for (ProviderId id : getProviders()) {
-        EnergyProvider provider = getProvider(id);
+        FlexcommEnergyProvider provider = getProvider(id);
         res = provider.performTimestampRequest(emsId, timestamp);
         if (res != null) {
           break;
@@ -234,23 +236,23 @@ public class EnergyManager
   }
 
   @Override
-  protected EnergyProviderService createProviderService(EnergyProvider provider) {
-    return new InternalEnergyProviderService(provider);
+  protected FlexcommEnergyProviderService createProviderService(FlexcommEnergyProvider provider) {
+    return new InternalFlexcommEnergyProviderService(provider);
   }
 
-  private class InternalEnergyStoreDelegate implements EnergyStoreDelegate {
+  private class InternalEnergyStoreDelegate implements FlexcommEnergyStoreDelegate {
 
     @Override
-    public void notify(EnergyEvent event) {
+    public void notify(FlexcommEnergyEvent event) {
       post(event);
     }
 
   }
 
-  private class InternalEnergyProviderService extends AbstractProviderService<EnergyProvider>
-      implements EnergyProviderService {
+  private class InternalFlexcommEnergyProviderService extends AbstractProviderService<FlexcommEnergyProvider>
+      implements FlexcommEnergyProviderService {
 
-    InternalEnergyProviderService(EnergyProvider provider) {
+    InternalFlexcommEnergyProviderService(FlexcommEnergyProvider provider) {
       super(provider);
     }
 
@@ -260,7 +262,7 @@ public class EnergyManager
       checkNotNull(energy, "Energy data cannot be null");
       checkValidity();
 
-      EnergyEvent event = store.updateEnergy(emsId, energy);
+      FlexcommEnergyEvent event = store.updateEnergy(emsId, energy);
       post(event);
     }
 
@@ -270,7 +272,7 @@ public class EnergyManager
       checkNotNull(energy, "Energy data cannot be null");
       checkValidity();
 
-      EnergyEvent event = store.updateStaticEnergy(emsId, energy);
+      FlexcommEnergyEvent event = store.updateStaticEnergy(emsId, energy);
       post(event);
     }
 
@@ -279,7 +281,7 @@ public class EnergyManager
       checkArgument(!isNullOrEmpty(emsId), EMS_ID_EMPTY_NULL);
       checkValidity();
 
-      EnergyEvent event = store.removeEnergy(emsId);
+      FlexcommEnergyEvent event = store.removeEnergy(emsId);
       post(event);
     }
   }
