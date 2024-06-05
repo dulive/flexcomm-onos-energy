@@ -17,4 +17,4 @@
 /**
  * ONOS application archetype.
  */
-package org.inesctec.flexcomm.energyclient;
+package org.inesctec.flexcomm.energy;

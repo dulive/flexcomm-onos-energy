@@ -1,4 +1,4 @@
-package org.inesctec.flexcomm.energyclient.impl;
+package org.inesctec.flexcomm.energy.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -15,17 +15,17 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import org.inesctec.flexcomm.energyclient.api.Energy;
-import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyEvent;
-import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyListener;
-import org.inesctec.flexcomm.energyclient.api.EnergyPeriod;
-import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyProvider;
-import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyProviderRegistry;
-import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyProviderService;
-import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyService;
-import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyStore;
-import org.inesctec.flexcomm.energyclient.api.FlexcommEnergyStoreDelegate;
-import org.inesctec.flexcomm.energyclient.impl.objects.DefaultEnergyPeriod;
+import org.inesctec.flexcomm.energy.api.Energy;
+import org.inesctec.flexcomm.energy.api.FlexcommEnergyEvent;
+import org.inesctec.flexcomm.energy.api.FlexcommEnergyListener;
+import org.inesctec.flexcomm.energy.api.EnergyPeriod;
+import org.inesctec.flexcomm.energy.api.FlexcommEnergyProvider;
+import org.inesctec.flexcomm.energy.api.FlexcommEnergyProviderRegistry;
+import org.inesctec.flexcomm.energy.api.FlexcommEnergyProviderService;
+import org.inesctec.flexcomm.energy.api.FlexcommEnergyService;
+import org.inesctec.flexcomm.energy.api.FlexcommEnergyStore;
+import org.inesctec.flexcomm.energy.api.FlexcommEnergyStoreDelegate;
+import org.inesctec.flexcomm.energy.impl.objects.DefaultEnergyPeriod;
 import org.onosproject.cfg.ComponentConfigService;
 import org.onosproject.core.CoreService;
 import org.onosproject.net.Device;
@@ -44,8 +44,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableSet;
 
-// TODO: have an annotation on the device that define which energy provider to use (scheme)
-// hava an annotation on hte device that define timezone
 @Component(immediate = true, service = {
     FlexcommEnergyService.class,
     FlexcommEnergyProviderRegistry.class

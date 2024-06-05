@@ -1,4 +1,4 @@
-package org.inesctec.flexcomm.energyclient.api;
+package org.inesctec.flexcomm.energy.api;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -6,16 +6,15 @@ import java.util.Collection;
 import org.onosproject.event.ListenerService;
 import org.onosproject.net.DeviceId;
 
-// TODO: change name of energy to something else
 public interface FlexcommEnergyService extends ListenerService<FlexcommEnergyEvent, FlexcommEnergyListener> {
 
   public Collection<Energy> getEnergy();
 
-  public Collection<Energy> getEnergy(Instant timestamp);
-
   public Energy getEnergy(String emsId);
 
   public Energy getEnergy(DeviceId deviceId);
+
+  public Collection<Energy> getEnergy(Instant timestamp);
 
   public Energy getEnergy(String emsId, Instant timestamp);
 
