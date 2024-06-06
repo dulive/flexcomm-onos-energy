@@ -338,7 +338,6 @@ public class RestFlexcommEnergyProvider extends AbstractProvider implements Flex
         .setFlexibilityArray(data.getFlexArrayConsumption())
         .setEstimateArray(data.getFlexArrayEstimate())
         .build();
-    providerService.updateStaticEnergy(emsId, energy);
     return energy;
   }
 

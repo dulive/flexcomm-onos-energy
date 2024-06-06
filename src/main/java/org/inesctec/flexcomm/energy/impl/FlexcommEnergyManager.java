@@ -9,16 +9,15 @@ import static org.onosproject.security.AppPermission.Type.DEVICE_READ;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 import org.inesctec.flexcomm.energy.api.Energy;
+import org.inesctec.flexcomm.energy.api.EnergyPeriod;
 import org.inesctec.flexcomm.energy.api.FlexcommEnergyEvent;
 import org.inesctec.flexcomm.energy.api.FlexcommEnergyListener;
-import org.inesctec.flexcomm.energy.api.EnergyPeriod;
 import org.inesctec.flexcomm.energy.api.FlexcommEnergyProvider;
 import org.inesctec.flexcomm.energy.api.FlexcommEnergyProviderRegistry;
 import org.inesctec.flexcomm.energy.api.FlexcommEnergyProviderService;
@@ -42,7 +41,7 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableList;
 
 @Component(immediate = true, service = {
     FlexcommEnergyService.class,
@@ -91,18 +90,18 @@ public class FlexcommEnergyManager
   }
 
   @Override
-  public Collection<Energy> getEnergy() {
+  public List<Energy> getEnergy() {
     checkPermission(DEVICE_READ);
 
     return store.getEnergy();
   }
 
   @Override
-  public Collection<Energy> getEnergy(Instant timestamp) {
+  public List<Energy> getEnergy(Instant timestamp) {
     checkPermission(DEVICE_READ);
     checkNotNull(timestamp, TIMESTAMP_NULL);
 
-    return ImmutableSet.copyOf(getEnergyEachDevice(timestamp));
+    return ImmutableList.copyOf(getEnergyEachDevice(timestamp));
   }
 
   @Override
@@ -127,14 +126,12 @@ public class FlexcommEnergyManager
     checkArgument(!isNullOrEmpty(emsId), EMS_ID_EMPTY_NULL);
     checkNotNull(timestamp, TIMESTAMP_NULL);
 
-    Energy res = store.getStaticEnergy(emsId);
-    if (res == null || !res.timestamp().equals(timestamp.truncatedTo(ChronoUnit.DAYS))) {
-      for (ProviderId id : getProviders()) {
-        FlexcommEnergyProvider provider = getProvider(id);
-        res = provider.performTimestampRequest(emsId, timestamp);
-        if (res != null) {
-          break;
-        }
+    Energy res = null;
+    for (ProviderId id : getProviders()) {
+      FlexcommEnergyProvider provider = getProvider(id);
+      res = provider.performTimestampRequest(emsId, timestamp);
+      if (res != null) {
+        break;
       }
     }
 
@@ -151,20 +148,11 @@ public class FlexcommEnergyManager
   }
 
   @Override
-  public Collection<EnergyPeriod> getCurrentEnergyPeriod() {
+  public List<EnergyPeriod> getCurrentEnergyPeriod() {
     checkPermission(DEVICE_READ);
 
     return store.getEnergy().stream().filter(Objects::nonNull).map(this::currentEnergyPeriod)
-        .collect(ImmutableSet.toImmutableSet());
-  }
-
-  @Override
-  public Collection<EnergyPeriod> getCurrentEnergyPeriod(Instant timestamp) {
-    checkPermission(DEVICE_READ);
-    checkNotNull(timestamp, TIMESTAMP_NULL);
-
-    return getEnergyEachDevice(timestamp).stream().filter(Objects::nonNull).map(this::currentEnergyPeriod)
-        .collect(ImmutableSet.toImmutableSet());
+        .collect(ImmutableList.toImmutableList());
   }
 
   @Override
@@ -182,25 +170,6 @@ public class FlexcommEnergyManager
     checkNotNull(deviceId, DEVICE_ID_NULL);
 
     return getCurrentEnergyPeriod(deviceService.getDevice(deviceId).annotations().value(EMSID_KEY));
-  }
-
-  @Override
-  public EnergyPeriod getCurrentEnergyPeriod(String emsId, Instant timestamp) {
-    checkPermission(DEVICE_READ);
-    checkArgument(!isNullOrEmpty(emsId), EMS_ID_EMPTY_NULL);
-    checkNotNull(timestamp, TIMESTAMP_NULL);
-
-    Energy e = getEnergy(emsId, timestamp);
-    return e != null ? currentEnergyPeriod(e) : null;
-  }
-
-  @Override
-  public EnergyPeriod getCurrentEnergyPeriod(DeviceId deviceId, Instant timestamp) {
-    checkPermission(DEVICE_READ);
-    checkNotNull(deviceId, DEVICE_ID_NULL);
-    checkNotNull(timestamp, TIMESTAMP_NULL);
-
-    return getCurrentEnergyPeriod(deviceService.getDevice(deviceId).annotations().value(EMSID_KEY), timestamp);
   }
 
   private Set<Energy> getEnergyEachDevice(Instant timestamp) {
@@ -261,16 +230,6 @@ public class FlexcommEnergyManager
       checkValidity();
 
       FlexcommEnergyEvent event = store.updateEnergy(emsId, energy);
-      post(event);
-    }
-
-    @Override
-    public void updateStaticEnergy(String emsId, Energy energy) {
-      checkArgument(!isNullOrEmpty(emsId), EMS_ID_EMPTY_NULL);
-      checkNotNull(energy, "Energy data cannot be null");
-      checkValidity();
-
-      FlexcommEnergyEvent event = store.updateStaticEnergy(emsId, energy);
       post(event);
     }
 
