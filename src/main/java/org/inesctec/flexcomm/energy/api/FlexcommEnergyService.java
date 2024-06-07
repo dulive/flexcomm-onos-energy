@@ -6,7 +6,7 @@ import java.util.Collection;
 import org.onosproject.event.ListenerService;
 import org.onosproject.net.DeviceId;
 
-public interface EnergyService extends ListenerService<EnergyEvent, EnergyListener> {
+public interface FlexcommEnergyService extends ListenerService<FlexcommEnergyEvent, FlexcommEnergyListener> {
 
   public Collection<Energy> getEnergy();
 

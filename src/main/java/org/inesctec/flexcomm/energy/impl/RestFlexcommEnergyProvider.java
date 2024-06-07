@@ -25,9 +25,9 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
 import org.inesctec.flexcomm.energy.api.Energy;
-import org.inesctec.flexcomm.energy.api.EnergyProvider;
-import org.inesctec.flexcomm.energy.api.EnergyProviderRegistry;
-import org.inesctec.flexcomm.energy.api.EnergyProviderService;
+import org.inesctec.flexcomm.energy.api.FlexcommEnergyProvider;
+import org.inesctec.flexcomm.energy.api.FlexcommEnergyProviderRegistry;
+import org.inesctec.flexcomm.energy.api.FlexcommEnergyProviderService;
 import org.inesctec.flexcomm.energy.impl.objects.DefaultEnergy;
 import org.onosproject.cfg.ComponentConfigService;
 import org.onosproject.net.Device;
@@ -55,7 +55,7 @@ import com.google.common.collect.Maps;
     URI_FLEX_PATH + "=" + URI_FLEX_PATH_DEFAULT,
     URI_ESTIMATE_PATH + "=" + URI_ESTIMATE_PATH_DEFAULT
 })
-public class RestEnergyProvider extends AbstractProvider implements EnergyProvider {
+public class RestFlexcommEnergyProvider extends AbstractProvider implements FlexcommEnergyProvider {
 
   private static final String QUERY_PARAM = "id";
   private static final String EMSID_KEY = "emsId";
@@ -69,7 +69,7 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
   protected DeviceService deviceService;
 
   @Reference(cardinality = ReferenceCardinality.MANDATORY)
-  protected EnergyProviderRegistry providerRegistry;
+  protected FlexcommEnergyProviderRegistry providerRegistry;
 
   private String energyURIAuthority = URI_AUTHORITY_DEFAULT;
 
@@ -77,7 +77,7 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
 
   private String energyURIEstimatePath = URI_ESTIMATE_PATH_DEFAULT;
 
-  private EnergyProviderService providerService;
+  private FlexcommEnergyProviderService providerService;
 
   private final InternalEnergyProvider listener = new InternalEnergyProvider();
 
@@ -87,7 +87,7 @@ public class RestEnergyProvider extends AbstractProvider implements EnergyProvid
 
   private Map<DeviceId, String> deviceEmsIds = Maps.newConcurrentMap();
 
-  public RestEnergyProvider() {
+  public RestFlexcommEnergyProvider() {
     super(new ProviderId("rest", "org.inesctec.provider.energy"));
   }
 

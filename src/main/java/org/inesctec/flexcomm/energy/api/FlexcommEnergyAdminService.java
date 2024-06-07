@@ -1,6 +1,6 @@
 package org.inesctec.flexcomm.energy.api;
 
-public interface EnergyAdminService extends EnergyService {
+public interface FlexcommEnergyAdminService extends FlexcommEnergyService {
 
   void removeEnergy(String emsId);
 
