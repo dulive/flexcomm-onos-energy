@@ -8,6 +8,8 @@ import org.inesctec.flexcomm.energy.api.EnergyPeriod;
 import org.onosproject.net.AbstractAnnotated;
 import org.onosproject.net.Annotations;
 
+import com.google.common.base.MoreObjects;
+
 public final class DefaultEnergyPeriod extends AbstractAnnotated implements EnergyPeriod {
 
   private final String emsId;
@@ -29,6 +31,16 @@ public final class DefaultEnergyPeriod extends AbstractAnnotated implements Ener
     this.timestamp = null;
     this.flexibility = 0.f;
     this.estimate = 0.f;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("emsId", emsId)
+        .add("timestamp", timestamp)
+        .add("flexibility", flexibility)
+        .add("estimate", estimate)
+        .toString();
   }
 
   public static EnergyPeriod.Builder builder() {

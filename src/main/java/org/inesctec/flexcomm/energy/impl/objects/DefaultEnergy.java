@@ -11,6 +11,8 @@ import org.inesctec.flexcomm.energy.api.Energy;
 import org.onosproject.net.AbstractAnnotated;
 import org.onosproject.net.Annotations;
 
+import com.google.common.base.MoreObjects;
+
 public final class DefaultEnergy extends AbstractAnnotated implements Energy {
 
   private final String emsId;
@@ -56,6 +58,16 @@ public final class DefaultEnergy extends AbstractAnnotated implements Energy {
   @Override
   public List<Double> estimateArray() {
     return this.estimateArray;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("emsId", emsId)
+        .add("timestamp", timestamp)
+        .add("flexibilityArray", flexibilityArray)
+        .add("estimateArray", estimateArray)
+        .toString();
   }
 
   public static final class Builder implements Energy.Builder {
