@@ -1,4 +1,4 @@
-package org.inesctec.flexcomm.energyclient.impl;
+package org.inesctec.flexcomm.energy.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -15,17 +15,17 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import org.inesctec.flexcomm.energyclient.api.Energy;
-import org.inesctec.flexcomm.energyclient.api.EnergyEvent;
-import org.inesctec.flexcomm.energyclient.api.EnergyListener;
-import org.inesctec.flexcomm.energyclient.api.EnergyPeriod;
-import org.inesctec.flexcomm.energyclient.api.EnergyProvider;
-import org.inesctec.flexcomm.energyclient.api.EnergyProviderRegistry;
-import org.inesctec.flexcomm.energyclient.api.EnergyProviderService;
-import org.inesctec.flexcomm.energyclient.api.EnergyService;
-import org.inesctec.flexcomm.energyclient.api.EnergyStore;
-import org.inesctec.flexcomm.energyclient.api.EnergyStoreDelegate;
-import org.inesctec.flexcomm.energyclient.impl.objects.DefaultEnergyPeriod;
+import org.inesctec.flexcomm.energy.api.Energy;
+import org.inesctec.flexcomm.energy.api.EnergyEvent;
+import org.inesctec.flexcomm.energy.api.EnergyListener;
+import org.inesctec.flexcomm.energy.api.EnergyPeriod;
+import org.inesctec.flexcomm.energy.api.EnergyProvider;
+import org.inesctec.flexcomm.energy.api.EnergyProviderRegistry;
+import org.inesctec.flexcomm.energy.api.EnergyProviderService;
+import org.inesctec.flexcomm.energy.api.EnergyService;
+import org.inesctec.flexcomm.energy.api.EnergyStore;
+import org.inesctec.flexcomm.energy.api.EnergyStoreDelegate;
+import org.inesctec.flexcomm.energy.impl.objects.DefaultEnergyPeriod;
 import org.onosproject.cfg.ComponentConfigService;
 import org.onosproject.core.CoreService;
 import org.onosproject.net.Device;

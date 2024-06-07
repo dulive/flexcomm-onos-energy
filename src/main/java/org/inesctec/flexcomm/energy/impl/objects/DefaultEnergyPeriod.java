@@ -1,10 +1,10 @@
-package org.inesctec.flexcomm.energyclient.impl.objects;
+package org.inesctec.flexcomm.energy.impl.objects;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.time.Instant;
 
-import org.inesctec.flexcomm.energyclient.api.EnergyPeriod;
+import org.inesctec.flexcomm.energy.api.EnergyPeriod;
 import org.onosproject.net.AbstractAnnotated;
 import org.onosproject.net.Annotations;
 

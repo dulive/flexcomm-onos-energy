@@ -1,12 +1,12 @@
-package org.inesctec.flexcomm.energyclient.impl;
+package org.inesctec.flexcomm.energy.impl;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_AUTHORITY;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_AUTHORITY_DEFAULT;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_ESTIMATE_PATH;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_ESTIMATE_PATH_DEFAULT;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_FLEX_PATH;
-import static org.inesctec.flexcomm.energyclient.impl.OsgiPropertyConstants.URI_FLEX_PATH_DEFAULT;
+import static org.inesctec.flexcomm.energy.impl.OsgiPropertyConstants.URI_AUTHORITY;
+import static org.inesctec.flexcomm.energy.impl.OsgiPropertyConstants.URI_AUTHORITY_DEFAULT;
+import static org.inesctec.flexcomm.energy.impl.OsgiPropertyConstants.URI_ESTIMATE_PATH;
+import static org.inesctec.flexcomm.energy.impl.OsgiPropertyConstants.URI_ESTIMATE_PATH_DEFAULT;
+import static org.inesctec.flexcomm.energy.impl.OsgiPropertyConstants.URI_FLEX_PATH;
+import static org.inesctec.flexcomm.energy.impl.OsgiPropertyConstants.URI_FLEX_PATH_DEFAULT;
 import static org.onlab.util.Tools.get;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -24,11 +24,11 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
-import org.inesctec.flexcomm.energyclient.api.Energy;
-import org.inesctec.flexcomm.energyclient.api.EnergyProvider;
-import org.inesctec.flexcomm.energyclient.api.EnergyProviderRegistry;
-import org.inesctec.flexcomm.energyclient.api.EnergyProviderService;
-import org.inesctec.flexcomm.energyclient.impl.objects.DefaultEnergy;
+import org.inesctec.flexcomm.energy.api.Energy;
+import org.inesctec.flexcomm.energy.api.EnergyProvider;
+import org.inesctec.flexcomm.energy.api.EnergyProviderRegistry;
+import org.inesctec.flexcomm.energy.api.EnergyProviderService;
+import org.inesctec.flexcomm.energy.impl.objects.DefaultEnergy;
 import org.onosproject.cfg.ComponentConfigService;
 import org.onosproject.net.Device;
 import org.onosproject.net.DeviceId;

@@ -1,22 +1,21 @@
-package org.inesctec.flexcomm.energyclient.api;
+package org.inesctec.flexcomm.energy.api;
 
 import static org.onosproject.net.DefaultAnnotations.EMPTY;
 
 import java.time.Instant;
-import java.util.List;
 
 import org.onosproject.net.Annotated;
 import org.onosproject.net.Annotations;
 
-public interface Energy extends Annotated {
+public interface EnergyPeriod extends Annotated {
 
   String emsId();
 
   Instant timestamp();
 
-  List<Double> flexibilityArray();
+  double flexibility();
 
-  List<Double> estimateArray();
+  double estimate();
 
   @Override
   default Annotations annotations() {
@@ -28,12 +27,13 @@ public interface Energy extends Annotated {
 
     Builder setTimestamp(Instant timestamp);
 
-    Builder setFlexibilityArray(List<Double> flexibilityArray);
+    Builder setFlexibility(double flexibility);
 
-    Builder setEstimateArray(List<Double> estimateArray);
+    Builder setEstimate(double estimate);
 
     Builder setAnnotations(Annotations anns);
 
-    Energy build();
+    EnergyPeriod build();
   }
+
 }

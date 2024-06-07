@@ -1,4 +1,4 @@
-package org.inesctec.flexcomm.energyclient.impl.objects;
+package org.inesctec.flexcomm.energy.impl.objects;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -7,7 +7,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.inesctec.flexcomm.energyclient.api.Energy;
+import org.inesctec.flexcomm.energy.api.Energy;
 import org.onosproject.net.AbstractAnnotated;
 import org.onosproject.net.Annotations;
 

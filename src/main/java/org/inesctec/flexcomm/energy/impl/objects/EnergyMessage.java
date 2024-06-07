@@ -1,4 +1,4 @@
-package org.inesctec.flexcomm.energyclient.impl.objects;
+package org.inesctec.flexcomm.energy.impl.objects;
 
 import java.io.Serializable;
 import java.util.List;

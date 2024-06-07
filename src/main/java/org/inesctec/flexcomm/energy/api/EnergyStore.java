@@ -1,4 +1,4 @@
-package org.inesctec.flexcomm.energyclient.api;
+package org.inesctec.flexcomm.energy.api;
 
 import java.util.Collection;
 

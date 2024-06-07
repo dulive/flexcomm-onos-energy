@@ -1,17 +1,17 @@
-package org.inesctec.flexcomm.energyclient.impl;
+package org.inesctec.flexcomm.energy.impl;
 
-import static org.inesctec.flexcomm.energyclient.api.EnergyEvent.Type.ENERGY_REMOVED;
-import static org.inesctec.flexcomm.energyclient.api.EnergyEvent.Type.ENERGY_UPDATED;
-import static org.inesctec.flexcomm.energyclient.api.EnergyEvent.Type.STATIC_ENERGY_REMOVED;
-import static org.inesctec.flexcomm.energyclient.api.EnergyEvent.Type.STATIC_ENERGY_UPDATED;
+import static org.inesctec.flexcomm.energy.api.EnergyEvent.Type.ENERGY_REMOVED;
+import static org.inesctec.flexcomm.energy.api.EnergyEvent.Type.ENERGY_UPDATED;
+import static org.inesctec.flexcomm.energy.api.EnergyEvent.Type.STATIC_ENERGY_REMOVED;
+import static org.inesctec.flexcomm.energy.api.EnergyEvent.Type.STATIC_ENERGY_UPDATED;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Collection;
 
-import org.inesctec.flexcomm.energyclient.api.Energy;
-import org.inesctec.flexcomm.energyclient.api.EnergyEvent;
-import org.inesctec.flexcomm.energyclient.api.EnergyStore;
-import org.inesctec.flexcomm.energyclient.api.EnergyStoreDelegate;
+import org.inesctec.flexcomm.energy.api.Energy;
+import org.inesctec.flexcomm.energy.api.EnergyEvent;
+import org.inesctec.flexcomm.energy.api.EnergyStore;
+import org.inesctec.flexcomm.energy.api.EnergyStoreDelegate;
 import org.onlab.util.KryoNamespace;
 import org.onosproject.store.AbstractStore;
 import org.onosproject.store.serializers.KryoNamespaces;

@@ -24,20 +24,20 @@
     </parent>
 
     <groupId>org.inesctec.flexcomm</groupId>
-    <artifactId>energy-client</artifactId>
+    <artifactId>energy</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
 
-    <description>FlexComm energy API client</description>
+    <description>FlexComm energy client</description>
     <url>http://onosproject.org</url>
 
     <properties>
-        <onos.app.name>org.inesctec.flexcomm.energyclient</onos.app.name>
-        <onos.app.title>FlexComm energy API client</onos.app.title>
+        <onos.app.name>org.inesctec.flexcomm.energy</onos.app.name>
+        <onos.app.title>FlexComm energy client</onos.app.title>
         <onos.app.origin>INESC TEC</onos.app.origin>
         <onos.app.category>default</onos.app.category>
         <onos.app.url>http://onosproject.org</onos.app.url>
-        <onos.app.readme>FlexComm energy API client</onos.app.readme>
+        <onos.app.readme>FlexComm energy client</onos.app.readme>
     </properties>
 
     <dependencies>

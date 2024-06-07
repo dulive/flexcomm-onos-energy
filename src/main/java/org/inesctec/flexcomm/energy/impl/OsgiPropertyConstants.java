@@ -1,4 +1,4 @@
-package org.inesctec.flexcomm.energyclient.impl;
+package org.inesctec.flexcomm.energy.impl;
 
 public final class OsgiPropertyConstants {
 
