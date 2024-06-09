@@ -2,11 +2,9 @@ package org.inesctec.flexcomm.energy.impl;
 
 import static org.inesctec.flexcomm.energy.api.FlexcommEnergyEvent.Type.ENERGY_REMOVED;
 import static org.inesctec.flexcomm.energy.api.FlexcommEnergyEvent.Type.ENERGY_UPDATED;
-import static org.inesctec.flexcomm.energy.api.FlexcommEnergyEvent.Type.STATIC_ENERGY_REMOVED;
-import static org.inesctec.flexcomm.energy.api.FlexcommEnergyEvent.Type.STATIC_ENERGY_UPDATED;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Collection;
+import java.util.List;
 
 import org.inesctec.flexcomm.energy.api.Energy;
 import org.inesctec.flexcomm.energy.api.FlexcommEnergyEvent;
@@ -27,10 +25,11 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.slf4j.Logger;
 
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableList;
 
 @Component(immediate = true, service = FlexcommEnergyStore.class)
-public class DistributedFlexcommEnergyStore extends AbstractStore<FlexcommEnergyEvent, FlexcommEnergyStoreDelegate> implements FlexcommEnergyStore {
+public class DistributedFlexcommEnergyStore extends AbstractStore<FlexcommEnergyEvent, FlexcommEnergyStoreDelegate>
+    implements FlexcommEnergyStore {
 
   private final Logger log = getLogger(getClass());
 
@@ -39,9 +38,6 @@ public class DistributedFlexcommEnergyStore extends AbstractStore<FlexcommEnergy
 
   private EventuallyConsistentMap<String, Energy> energyData;
   private EventuallyConsistentMapListener<String, Energy> energyDataListener = new InternalEnergyListerner();
-
-  private EventuallyConsistentMap<String, Energy> staticEnergyData;
-  private EventuallyConsistentMapListener<String, Energy> staticEnergyDataListener = new InternalStaticEnergyListerner();
 
   protected static final KryoNamespace.Builder SERIALIZER_BUILDER = KryoNamespace.newBuilder()
       .register(KryoNamespaces.API)
@@ -56,22 +52,13 @@ public class DistributedFlexcommEnergyStore extends AbstractStore<FlexcommEnergy
         .build();
     energyData.addListener(energyDataListener);
 
-    staticEnergyData = storageService.<String, Energy>eventuallyConsistentMapBuilder()
-        .withName("onos-flexcomm-static-energy")
-        .withSerializer(SERIALIZER_BUILDER)
-        .withTimestampProvider((k, v) -> new WallClockTimestamp())
-        .build();
-    staticEnergyData.addListener(staticEnergyDataListener);
-
     log.info("Started");
   }
 
   @Deactivate
   public void deactivate() {
     energyData.removeListener(energyDataListener);
-    staticEnergyData.removeListener(staticEnergyDataListener);
     energyData.destroy();
-    staticEnergyData.destroy();
     log.info("Stopped");
   }
 
@@ -83,14 +70,8 @@ public class DistributedFlexcommEnergyStore extends AbstractStore<FlexcommEnergy
   }
 
   @Override
-  public FlexcommEnergyEvent updateStaticEnergy(String emsId, Energy energy) {
-    staticEnergyData.put(emsId, energy);
-    return null;
-  }
-
-  @Override
-  public Collection<Energy> getEnergy() {
-    return ImmutableSet.copyOf(energyData.values());
+  public List<Energy> getEnergy() {
+    return ImmutableList.copyOf(energyData.values());
   }
 
   @Override
@@ -99,19 +80,8 @@ public class DistributedFlexcommEnergyStore extends AbstractStore<FlexcommEnergy
   }
 
   @Override
-  public Collection<Energy> getStaticEnergy() {
-    return ImmutableSet.copyOf(staticEnergyData.values());
-  }
-
-  @Override
-  public Energy getStaticEnergy(String emsId) {
-    return staticEnergyData.get(emsId);
-  }
-
-  @Override
   public FlexcommEnergyEvent removeEnergy(String emsId) {
     energyData.remove(emsId);
-    staticEnergyData.remove(emsId);
 
     return null;
   }
@@ -133,20 +103,4 @@ public class DistributedFlexcommEnergyStore extends AbstractStore<FlexcommEnergy
     }
   }
 
-  private class InternalStaticEnergyListerner implements EventuallyConsistentMapListener<String, Energy> {
-    @Override
-    public void event(EventuallyConsistentMapEvent<String, Energy> event) {
-      Energy energy = event.value();
-      switch (event.type()) {
-        case PUT:
-          notifyDelegate(new FlexcommEnergyEvent(STATIC_ENERGY_UPDATED, energy));
-          break;
-        case REMOVE:
-          notifyDelegate(new FlexcommEnergyEvent(STATIC_ENERGY_REMOVED, energy));
-          break;
-        default:
-          break;
-      }
-    }
-  }
 }

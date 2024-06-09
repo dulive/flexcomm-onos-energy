@@ -215,11 +215,6 @@ public class RestFlexcommEnergyProvider extends AbstractProvider implements Flex
     return energyResponse.entrySet().iterator().next();
   }
 
-  @Override
-  public Energy performTimestampRequest(String emsId, Instant timestamp) {
-    return null;
-  }
-
   private class InternalEnergyProvider implements DeviceListener {
 
     private boolean isDisable = false;
