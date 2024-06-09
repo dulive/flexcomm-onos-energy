@@ -7,6 +7,7 @@ import static org.onosproject.security.AppGuard.checkPermission;
 import static org.onosproject.security.AppPermission.Type.DEVICE_READ;
 
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 
@@ -148,7 +149,7 @@ public class FlexcommEnergyManager
 
     EnergyPeriod.Builder builder = DefaultEnergyPeriod.builder()
         .setEmsId(energy.emsId())
-        .setTimestamp(energy.timestamp())
+        .setTimestamp(energy.timestamp().plus(index * 15, ChronoUnit.MINUTES))
         .setFlexibility(energy.flexibilityArray().get(index))
         .setEstimate(energy.estimateArray().get(index))
         .setAnnotations(energy.annotations());
