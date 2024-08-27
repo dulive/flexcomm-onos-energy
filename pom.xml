@@ -41,7 +41,7 @@
         <api.description>FlexComm Energy REST API</api.description>
         <api.package>org.inesctec.flexcomm.energy.rest</api.package>
         <api.title>FlexComm Energy REST API</api.title>
-        <web.context>/onos/flexcomm</web.context>
+        <web.context>/onos/flexcomm/energy</web.context>
     </properties>
 
     <dependencies>
@@ -167,6 +167,19 @@
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <_wab>src/main/webapp/</_wab>
+                        <Bundle-SymbolicName>
+                            ${project.groupId}.${project.artifactId}
+                        </Bundle-SymbolicName>
+                        <Import-Package>
+                            *,org.glassfish.jersey.servlet
+                        </Import-Package>
+                        <Web-ContextPath>${web.context}</Web-ContextPath>
+                    </instructions>
+                </configuration>
             </plugin>
         </plugins>
     </build>
