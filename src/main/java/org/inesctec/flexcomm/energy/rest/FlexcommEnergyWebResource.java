@@ -31,7 +31,7 @@ import org.onosproject.rest.AbstractWebResource;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-@Path("energy")
+@Path("")
 public class FlexcommEnergyWebResource extends AbstractWebResource {
 
   @GET
